@@ -5,10 +5,13 @@ require_once('autoload.php');
 class saImport
 {
 
-	const INI_NAME = 'saimport.ini';
+	const DEFAULT_INI_NAME = 'saimport.ini';
+
 
 	static $cli = false;
 	static $script = false;
+
+	static $importININame = self::DEFAULT_INI_NAME;	
 	static $importINI = false;
 
 	const DEBUG_LEVEL_NONE = -1;
@@ -387,7 +390,7 @@ class saImport
 		{
 			// If no existing nodes were found create and publish new object and set it for update
 			self::output("No existing nodes found, creating new.");
-			$object = eZContentFunctions::createAndPublishObject(&$parameters);
+			$object = eZContentFunctions::createAndPublishObject( $parameters );
 			$node = $object->attribute('main_node');
 		}
 		elseif ( !(isset($import_data['overwrite']) && $import_data['overwrite']) )
@@ -667,6 +670,12 @@ class saImport
 	
 		return $options;
 	}
+
+
+	static function getImportININode( $setting, $break = true)
+	{
+		return self::getININode( 'ImportSettings', $setting, $break );
+	}
 	
 	static function getININode($group, $setting, $break = true)
 	{
@@ -687,19 +696,28 @@ class saImport
 		return $node;
 	}
 
-	static function getINIClass($group, $setting, $break = true)
+
+	static function getImportINIClass( $setting, $break = true)
+	{
+		return self::getINIClass( 'ImportSettings', $setting, $break );
+	}
+	
+	static function getINIClass( $group, $setting, $break = true )
 	{
 
-		self::getImportINI($group, $setting, $class_identifier);
-		$class = eZContentClass::fetchByIdentifier($class_identifier);
+		$classIdentifier = null;
+		
+		self::getImportINI( $group, $setting, $classIdentifier );
+		
+		$class = eZContentClass::fetchByIdentifier( $classIdentifier );
 
 		if (!$class)
 		{
-			$msg = "There's no class with identifier '" . $class_identifier . "' for setting $group -> $setting.";
+			$msg = "There's no class with identifier '" . $classIdentifier . "' for setting $group -> $setting.";
 			if ($break)
-				self::breakScript($msg);
+				self::breakScript( $msg );
 			else
-				$self::output($msg);				
+				$self::output( $msg );
 		}
 
 		self::output("Fetched class $group -> $setting: ". $class->attribute('name') . ' - ('. $class->attribute('identifier') . ')');
@@ -707,24 +725,45 @@ class saImport
 		return $class;
 	}
 
-	static function getImportINI($group, $setting, &$var)
+	static function getImportINI( $group, $setting, &$var )
 	{
 		if ( !self::$importINI )
 		{
-			self::$importINI = eZINI::instance( self::INI_NAME );
+			self::$importINI = eZINI::instance( self::$importININame );
 			self::$importINI->load();
 		}
 
-		self::getINI(self::$importINI, $group, $setting, &$var);
+		return self::getINI( self::$importINI, $group, $setting, $var );
 	}
 	
-	static function getINI($inifile, $group, $setting, &$var)
+	static function getINI( $inifile, $group, $setting, &$var )
 	{
 	
-		if ($inifile->hasvariable($group, $setting))
+		if ( is_array( $setting ) )
 		{
-			$var = self::trimRecursive($inifile->variable( $group, $setting ));
+			$settingName = $setting[0];
+			$settingKey = $setting[1]; 
+		}
+		else
+		{
+			$settingName = $setting;
+			$settingKey = null;
+		}
+			
+		$result = self::_getINI($inifile, $group, $settingName, $var );
+
+		if ( $result && $settingKey )
+			$var = $var[$settingKey];
+		
+		return $result;
+	}
 	
+	private static function _getINI( $inifile, $group, $setting, &$var )
+	{
+		
+		if ( $inifile->hasvariable( $group, $setting ) )
+		{
+			$var = self::trimRecursive( $inifile->variable( $group, $setting ) );
 			return true;
 		}
 		else
@@ -734,7 +773,7 @@ class saImport
 	static function breakScript($message = '')
 	{
 		if (self::$script)
-			self::$script->shutdown(1, $message);
+			self::$script->shutdown( 1, $message );
 		else
 		{
 			self::output($message);
@@ -825,7 +864,7 @@ class saImport
 		}
 	}
 
-	private static getModuleOperationKey( $moduleName, $operationName, $operationPartName, $index )
+	private static function getModuleOperationKey( $moduleName, $operationName, $operationPartName, $index )
 	{
 		return "$moduleName|$operationName|$operationPartName|$index";
 	}
