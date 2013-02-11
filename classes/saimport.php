@@ -11,8 +11,11 @@ class saImport
 	static $cli = false;
 	static $script = false;
 
-	static $importININame = self::DEFAULT_INI_NAME;	
+	static $importININame = self::DEFAULT_INI_NAME;
+	static $displayTime = true;
+		
 	static $importINI = false;
+	
 
 	const DEBUG_LEVEL_NONE = -1;
 	const DEBUG_LEVEL_STANDARD = 0;
@@ -32,6 +35,8 @@ class saImport
 	static $FilesFolder = "";
 
 	static $lastOutput = '';
+
+	static $moduleOperationList = array();
 
 	static $simpleHTMLReplacements = array(
 #                        '<p>' => '<paragraph>',
@@ -184,6 +189,8 @@ class saImport
 
 		if ( $mainLocation && isset( $mainLocation['node'] ) )
 			$searchNode = $mainLocation['node'];
+		else 
+			$searchNode = null;
 
 		if ( !$searchNode )
 		{
@@ -231,8 +238,16 @@ class saImport
 		}
 
 //TODO: manage case when $searchAllLocations == true
-
-
+		if ( !isset( $importData['merge_match_attributes'] ) || $importData['merge_match_attributes'] )
+		{
+			foreach ( $importData['attribute_match'] as $attributeName => $attributeValue )
+			{
+				$importData['attributes'][$attributeName] = array( 'from_string' => $attributeValue );	
+			}
+			
+		}
+			
+//var_dump($importData['attributes']);exit;
 		$importData['existing_filter'] = $existingFilter;
 
 		return self::Import( $importData );
@@ -671,6 +686,15 @@ class saImport
 		return $options;
 	}
 
+	static function generateAttributesArray( $simpleAttributes, $overwrite = true )
+	{
+		$attributes = array();
+		foreach ( $simpleAttributes as $attributeName => $attributeValue )
+		{
+			$attributes[$attributeName] = array( 'from_string' => $attributeValue, 'overwrite' => $overwrite );
+		}
+		return $attributes;
+	}
 
 	static function getImportININode( $setting, $break = true)
 	{
@@ -688,10 +712,13 @@ class saImport
 			if ($break)
 				self::breakScript($msg);
 			else
-				$self::output($msg);						
+				self::output($msg);						
 		}
-			
-		self::output("Fetched node $group -> $setting: ". $node->attribute('name') . ' - ('. $node->attribute('node_id') . ')');
+		else
+		{
+			$settingName = is_array( $setting ) ? $setting = $setting[0] . '['  . $setting[1] . ']' : $setting;
+			self::output("Fetched node $group -> $settingName: ". $node->attribute('name') . ' - ('. $node->attribute('node_id') . ')');			
+		}
 		
 		return $node;
 	}
@@ -717,10 +744,14 @@ class saImport
 			if ($break)
 				self::breakScript( $msg );
 			else
-				$self::output( $msg );
+				self::output( $msg );
 		}
-
-		self::output("Fetched class $group -> $setting: ". $class->attribute('name') . ' - ('. $class->attribute('identifier') . ')');
+		else
+		{
+			$settingName = is_array( $setting ) ? $setting = $setting[0] . '['  . $setting[1] . ']' : $setting;
+			self::output("Fetched class $group -> $settingName: ". $class->attribute('name') . ' - ('. $class->attribute('identifier') . ')');
+		}
+			
 			
 		return $class;
 	}
@@ -791,7 +822,15 @@ class saImport
 				$context = "saImport";
 
 			self::$lastOutput = $message;
-				
+			
+			if ( self::$displayTime )
+			{
+				$microtime = microtime( true );
+				$time = floor( $microtime );
+				$miliseconds = $microtime - $time;  
+				$context .= date( ' d.m.Y H:i:s.', $time ) . round( $miliseconds * 1000 );
+			}
+			
 			if (self::$cli)
 				self::$cli->output( "$context: $message" );
 			else
