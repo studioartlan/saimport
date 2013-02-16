@@ -16,6 +16,7 @@ class saImport
 		
 	static $importINI = false;
 	
+	static $lowercaseComparison = true;
 
 	const DEBUG_LEVEL_NONE = -1;
 	const DEBUG_LEVEL_STANDARD = 0;
@@ -130,7 +131,7 @@ class saImport
 		$result = $params['parent_node']->subTree($fetchHash);
 
 //		print_r($params['parent_node']);
-//		print_r($fetchHash);
+//		var_dump($fetchHash, $result );
 //		print_r($result);
 //exit;
 	
@@ -213,7 +214,11 @@ class saImport
 		if ( isset( $importData['attribute_match'] ) )
 		{
 			foreach ( $importData['attribute_match'] as $attributeName => $matchValue )
+			{
+				if ( self::$lowercaseComparison ) $matchValue = strtolower( $matchValue );
 				$attributeFilter[] = array( $class->attribute('identifier') . '/' . $attributeName, '=', $matchValue );
+			}
+				
 
 		}
 
