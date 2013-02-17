@@ -127,9 +127,10 @@ class saImport
 
 		if (isset($params['ignore_visibility']))
 			$fetchHash['IgnoreVisibility'] = $params['ignore_visibility'];
+//var_dump( $fetchHash, $params['parent_node'] );
 
 		$result = $params['parent_node']->subTree($fetchHash);
-
+//var_dump( $result );
 //		print_r($params['parent_node']);
 //		var_dump($fetchHash, $result );
 //		print_r($result);
@@ -452,39 +453,39 @@ class saImport
 		$object->store();
 		
 		// Set attributes
-		$attributes = $object->attribute( 'contentobject_attributes' );
 		$dataMap = $object->attribute( 'data_map' );
-
-		foreach ($import_attributes as $attributeIdentifier => $attributeImportData)
+		$paramAttributes = $parameters['attributes'];
+		
+		foreach ( $import_attributes as $attributeIdentifier => $attributeImportData )
 		{
 
 //ezDebug::writeError("Processing attribute $attributeIdentifier");
 
 			// Checking if owerwrite is allowed
-			if (isset($attributeImportData['overwrite']) && $attributeImportData['overwrite'])
+			if ( !empty( $attributeImportData['overwrite'] ) )
 			{
 			
 				$attribute = $dataMap[$attributeIdentifier];
 
-				if ($attribute)
+				if ( $attribute )
 				{
 					// Wether we have attribute data
-					if (isset($parameters['attributes'][$attributeIdentifier]))
+					if ( isset( $paramAttributes[$attributeIdentifier] ) )
 					{
 	//ezDebug::writeError("Overwriting attribute $attributeIdentifier");
-						self::output("Overwriting attribute $attributeIdentifier");
+						self::output( "Overwriting attribute $attributeIdentifier" );
 						// Set the attribute data using fromString() method
-						$attribute->fromString($parameters['attributes'][$attributeIdentifier] );
+						$attribute->fromString( $paramAttributes[$attributeIdentifier] );
 					}
-					elseif (isset($attributeImportData['allow_delete']) && $attributeImportData['allow_delete']) 
+					elseif ( !empty( $attributeImportData['allow_delete'] ) ) 
 					{
 						//If there's no attribute data, and allow_delete is set we remove the attribute
 	//ezDebug::writeError("Deleting attribute value for $attributeIdentifier");
-						self::output("Deleting attribute value for $attributeIdentifier");
+						self::output( "Deleting attribute value for $attributeIdentifier" );
 						$attribute->removeThis( $attribute->attribute( 'id' ), $version->attribute( 'version' ) );
 					}
 	//ezDebug::writeError("Storing attribute $attributeIdentifier");
-					self::output("Storing attribute $attributeIdentifier", self::DEBUG_LEVEL_ALL);
+					self::output( "Storing attribute $attributeIdentifier", self::DEBUG_LEVEL_ALL );
 					$attribute->store();
 				}
 				else
