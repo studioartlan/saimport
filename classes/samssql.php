@@ -32,7 +32,7 @@ class saMSSQL {
 		return true;
 	}
 
-	function select( $fields, $tables, $where = '', $orderBy = '', $limit = '')
+	function select( $fields, $tables, $where = '', $orderBy = '', $limit = '', $asObject = false )
 	{
 		$fields = self::escapeFields( $fields );
 
@@ -40,14 +40,28 @@ class saMSSQL {
 
 		foreach ( $fields as $value )
 			$fieldsArray[] = $value;
+		if ( $limit )
+			$limitString = "TOP $limit ";
+		else
+			$limitString = '';
 
-		$query = "SELECT " . implode( ", ", $fieldsArray ) . " FROM $tables";
+		$query = "SELECT $limitString" . implode( ", ", $fieldsArray ) . " FROM $tables";
 
 		if ( $where ) $query .= " WHERE $where";
 		if ( $orderBy ) $query .= " ORDER BY $orderBY";
 		// TODO: implement limit
 		
-		return $this->query( $query );
+		$result = $this->query( $query );
+		
+		if ( $asObject )
+		{
+			if ( $result )
+				return $result[0];
+			else
+				return null;
+		}
+		else
+			return $result;
 	}
 
 	function insert( $tables, $fields )
