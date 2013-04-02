@@ -366,7 +366,7 @@ class saImport
 //		print_r($parameters); return false;
 
 
-		if ( $import_data['existing_node'] )
+		if ( !empty( $import_data['existing_node'] ) )
 			$existingNodes = array( $import_data['existing_node'] );
 		else
 		{
@@ -416,6 +416,7 @@ class saImport
 		{
 			// If no existing nodes were found create and publish new object and set it for update
 			self::output("No existing nodes found, creating new.");
+//var_dump($parameters);
 			$object = eZContentFunctions::createAndPublishObject( $parameters );
 			$node = $object->attribute('main_node');
 		}
