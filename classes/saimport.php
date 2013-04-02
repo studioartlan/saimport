@@ -366,13 +366,18 @@ class saImport
 //		print_r($parameters); return false;
 
 
-		// Checking for exsisting objects
-		self::output("Looking for existing nodes...");
-
-		if (isset($import_data['existing_filter']))
-				$existingNodes = self::FindNodes($import_data['existing_filter']);
+		if ( $import_data['existing_node'] )
+			$existingNodes = array( $import_data['existing_node'] );
 		else
-			$existingNodes = false;
+		{
+			// Checking for exsisting objects
+			self::output("Looking for existing nodes...");
+	
+			if (isset($import_data['existing_filter']))
+					$existingNodes = self::FindNodes($import_data['existing_filter']);
+			else
+				$existingNodes = false;			
+		}
 
 		// If more than one node was found, we check if it's the same object under all nodes
 		if ( count($existingNodes) > 1)
