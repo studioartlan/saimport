@@ -535,7 +535,7 @@ class saImport
 		$classAttribute = $class->fetchAttributeByIdentifier($attributeIdentifier);
 		if ($classAttribute)
 		{
-			if (isset($attribute_data['from_string']))
+			if ( isset( $attribute_data['from_string'] ) || $attribute_data['from_string'] === NULL )
 			{
 				return $attribute_data['from_string'];
 			}
@@ -700,6 +700,7 @@ class saImport
 
 	static function generateAttributesArray( $simpleAttributes, $overwrite = true )
 	{
+		
 		$attributes = array();
 		foreach ( $simpleAttributes as $attributeName => $attributeValue )
 		{
