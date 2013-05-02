@@ -861,6 +861,21 @@ class saImport
 	}
 	
 
+	static function importStandardDisablePublishOperation()
+	{
+		self::disablePublishOperation( 'send-to-publishing-queue' );
+		self::disablePublishOperation( 'pre_publish' );
+		self::disablePublishOperation( 'publish-objectextension-handler' );
+		
+		self::disablePublishOperation( 'clear-object-view-cache' );
+		self::disablePublishOperation( 'generate-object-view-cache' );
+		self::disablePublishOperation( 'register-search-object' );
+		self::disablePublishOperation( 'remove-temporary-drafts' );
+
+		self::disablePublishOperation( 'create-notification' );
+		self::disablePublishOperation( 'post_publish' );
+	}
+
 	static function disablePublishOperation( $operationPartName )
 	{
 		self::disableModuleOperation('content', 'publish', $operationPartName);
