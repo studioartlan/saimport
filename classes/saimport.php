@@ -630,7 +630,7 @@ class saImport
 	static function replacePatterns( $text, $replacements, $delimiter = self::DEFAULT_REGEX_DELIMITER )
 	{
 
-		foreach ( $mappingArray as $key => $value )
+		foreach ( $replacements as $key => $value )
 		{
 			$pattern = "$delimiter$key$delimiter";
 			$replacement = $value;
