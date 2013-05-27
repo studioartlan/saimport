@@ -483,9 +483,10 @@ class saImport
 						// Set the attribute data using fromString() method
 						$attribute->fromString( $paramAttributes[$attributeIdentifier] );
 					}
-					elseif ( !empty( $attributeImportData['allow_delete'] ) ) 
+					elseif ( !empty( $attributeImportData['allow_delete'] ) && $attribute->attribute( 'has_content' ) ) 
 					{
-						//If there's no attribute data, and allow_delete is set we remove the attribute
+						//If there's no attribute data, and allow_delete is set and attribute has content
+						// we remove the attribute
 	//ezDebug::writeError("Deleting attribute value for $attributeIdentifier");
 						self::output( "Deleting attribute value for $attributeIdentifier" );
 						$attribute->removeThis( $attribute->attribute( 'id' ), $version->attribute( 'version' ) );
