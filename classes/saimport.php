@@ -489,7 +489,10 @@ class saImport
 						// we remove the attribute
 	//ezDebug::writeError("Deleting attribute value for $attributeIdentifier");
 						self::output( "Deleting attribute value for $attributeIdentifier" );
-						$attribute->removeThis( $attribute->attribute( 'id' ), $version->attribute( 'version' ) );
+// xmak debug: ako ne podesimo verziju, onda ne bi trebao javiti debug notice za image aliase
+// no u tom slučaju briše SVE aliase za tu sliku i njene prijašnje verzije - treba vidjeti dal je to OK 
+//						$attribute->removeThis( $attribute->attribute( 'id' ), $version->attribute( 'version' ) );
+						$attribute->removeThis( $attribute->attribute( 'id' ) );
 					}
 	//ezDebug::writeError("Storing attribute $attributeIdentifier");
 					self::output( "Storing attribute $attributeIdentifier", self::DEBUG_LEVEL_ALL );
