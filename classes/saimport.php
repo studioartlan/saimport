@@ -48,6 +48,35 @@ class saImport
                         '</b>' => '</strong>'
 	);
 
+	static function freeNodesMemory( $nodes )
+	{
+		return self::freeObjectsMemory( $nodes, true );
+	}
+
+	static function freeObjectsMemory( $objects, $isNodes = false )
+	{
+		if ( !$objects )
+			return false;
+		
+		if ( !is_array( $objects ) )
+			$objects = array( $objects );
+
+		foreach ( $objects as $object )
+		{
+			if ( $isNodes )
+				$object = $object->attribute( 'object' );
+			else
+				$object = $item;
+
+			$objectID = $object->attribute( 'id' );
+
+			$object->resetDataMap();
+			eZContentObject::clearCache( $objectID );
+		}
+
+		return true;
+	}
+	
 	static function ImportFile($filename, $importClass, $importMethod, $skipFirstRows = 0)
 	{
 
@@ -93,7 +122,22 @@ class saImport
 
 	}
 
-	static function FindNodes($params)
+	static function findFirstNode( &$params )
+	{
+		$nodes = self::FindNodes( $params );
+
+		if ( $nodes )
+			$result = array_shift( $nodes );
+		else
+			$result = null;
+
+		//saImport::freeNodesMemory( $nodes );
+		
+		return $result;
+
+	}
+	
+	static function FindNodes( &$params )
 	{
 		if (!isset($params['class'])  || !isset($params['parent_node']))
 			return false;
@@ -127,14 +171,8 @@ class saImport
 
 		if (isset($params['ignore_visibility']))
 			$fetchHash['IgnoreVisibility'] = $params['ignore_visibility'];
-//var_dump( $fetchHash, $params['parent_node'] );
 
 		$result = $params['parent_node']->subTree($fetchHash);
-//var_dump( $result );
-//		print_r($params['parent_node']);
-//		var_dump($fetchHash, $result );
-//		print_r($result);
-//exit;
 	
 		return $result;
 	}
@@ -334,9 +372,8 @@ class saImport
 
 				if (isset($location_import_data['is_main']) && $location_import_data['is_main'])
 					$parentNodeId = $locationID;
-				else
-					$additionalLocations[] = $locationID;
 
+				$additionalLocations[] = $locationID;
 			}
 			else
 				self::output("A missing parent node occurred.");
@@ -411,7 +448,7 @@ class saImport
 				self::output("More than one existing node found, but all belong to the same object, continuing with update...");
 			}
 		}
-		
+
 		if (!$existingNodes)
 		{
 			// If no existing nodes were found create and publish new object and set it for update
@@ -433,7 +470,6 @@ class saImport
 			$object = $node->attribute('object');
 			self::output("Existing node found (" . $node->attribute('name') ."), updating...");
 		}
-
 
 		$version = $object->currentVersion();
 		$version->setAttribute( 'status', eZContentObjectVersion::STATUS_DRAFT );
@@ -519,6 +555,9 @@ class saImport
 		else
 			self::output("Object publishing failed: " . $object->attribute( 'name' ), self::DEBUG_LEVEL_VERBOSE);
 		
+		
+		saImport::freeNodesMemory( $existingNodes );
+
 		unset($version);
 		unset($existingNodes);
 
@@ -848,7 +887,7 @@ class saImport
 				$context .= date( ' d.m.Y H:i:s.', $time ) . round( $miliseconds * 1000 );
 			}
 			
-			if (self::$cli)
+			if ( self::$cli )
 				self::$cli->output( "$context: $message" );
 			else
 				ezDebug::writeError( $message, $context );
