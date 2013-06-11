@@ -394,7 +394,7 @@ class saImport
 		foreach ($import_attributes as $attributeIdentifier => $attribute_import_data)
 		{
 			$attribute_data = self::_ImportAttributeData($import_class, $attributeIdentifier, $attribute_import_data);
-			if ($attribute_data)
+			if ( $attribute_data !== NULL )
 				$attributesData[$attributeIdentifier] = $attribute_data;
 		}
 
@@ -497,7 +497,7 @@ class saImport
 		// Set attributes
 		$dataMap = $object->attribute( 'data_map' );
 		$paramAttributes = $parameters['attributes'];
-		
+
 		foreach ( $import_attributes as $attributeIdentifier => $attributeImportData )
 		{
 
@@ -575,6 +575,7 @@ class saImport
 
 	private static function _ImportAttributeData(&$class, &$attributeIdentifier, &$attribute_data)
 	{
+
 		$classAttribute = $class->fetchAttributeByIdentifier($attributeIdentifier);
 		if ($classAttribute)
 		{
