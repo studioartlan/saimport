@@ -657,16 +657,16 @@ class saImport
 // TODO: detect wether to use OE parser or not
 //                $parser = new eZOEInputParser();
 
-                $parser = new eZSimplifiedXMLInputParser(NULL);
-                $parser->setParseLineBreaks( true );
-                $document = $parser->process( $text );
+        $parser = new eZSimplifiedXMLInputParser(NULL);
+        $parser->setParseLineBreaks( true );
+        $document = $parser->process( $text );
 
-                if ($document)
-                        $text = eZXMLTextType::domString( $document );
-                else
-                        saImport::output("Could not parse XML text $text");
+		if ($document)
+			$text = eZXMLTextType::domString( $document );
+		else
+			saImport::output("Could not parse XML text $text");
 
-                return $text;
+        return $text;
 
 	}
 
