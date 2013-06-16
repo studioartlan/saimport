@@ -437,7 +437,7 @@ class saImport
 			if ($existingNodesIDs)
 			{
 				// If found more than one object we don't import
-				self::output("More than one existing node found.");
+				self::output( "More than one existing node found." );
 				self::output( "Nodes IDs: " . implode(',', $existingNodesIDs) );
 				self::output( "Nodes names: " . implode(',', $existingNodesNames) );
 				return false;
