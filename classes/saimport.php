@@ -172,6 +172,9 @@ class saImport
 		if (isset($params['ignore_visibility']))
 			$fetchHash['IgnoreVisibility'] = $params['ignore_visibility'];
 
+		if (isset($params['main_node_only']))
+			$fetchHash['MainNodeOnly'] = $params['main_node_only'];
+
 		$result = $params['parent_node']->subTree($fetchHash);
 	
 		return $result;
