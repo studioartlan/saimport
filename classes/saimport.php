@@ -181,6 +181,9 @@ class saImport
 		if (isset($params['attribute_filter']))
 			$fetchHash['AttributeFilter'] = $params['attribute_filter'];
 
+		if (isset($params['depth']))
+			$fetchHash['Depth'] = $params['depth'];
+
 		if (isset($params['ignore_visibility']))
 			$fetchHash['IgnoreVisibility'] = $params['ignore_visibility'];
 
