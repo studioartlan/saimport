@@ -127,8 +127,7 @@ class saImport
 		if ( !isset( $params['import_id_identifier'] ) )
 			$params['import_id_identifier'] = self::DEFAULT_IMPORT_ID_IDENTIFIER;
 
-		$findParams = $params;
-		$findParams['attribute_filter'] = array( array( $params['class']->attribute( 'identifier' ) . '/' . $params['import_id_identifier'], '=', $params['import_id_value'] ) );
+		$params['attribute_filter'] = array( array( $params['class']->attribute( 'identifier' ) . '/' . $params['import_id_identifier'], '=', $params['import_id_value'] ) );
 
 		return saImport::findFirstNode( $findParams );
 
@@ -136,6 +135,7 @@ class saImport
 
 	static function findFirstNode( $params )
 	{
+		$params['limit'] = 1;
 		$nodes = self::FindNodes( $params );
 
 		if ( $nodes )
@@ -181,8 +181,11 @@ class saImport
 		if (isset($params['attribute_filter']))
 			$fetchHash['AttributeFilter'] = $params['attribute_filter'];
 
-		if (isset($params['depth']))
+		if ( isset( $params['depth'] ) )
 			$fetchHash['Depth'] = $params['depth'];
+
+		if ( isset( $params['limit'] ) )
+			$fetchHash['Limit'] = $params['limit'];
 
 		if (isset($params['ignore_visibility']))
 			$fetchHash['IgnoreVisibility'] = $params['ignore_visibility'];
