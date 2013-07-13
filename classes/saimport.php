@@ -6,7 +6,7 @@ class saImport
 {
 
 	const DEFAULT_INI_NAME = 'saimport.ini';
-
+	const DEFAULT_IMPORT_ID_IDENTIFIER = 'import_id';
 
 	static $cli = false;
 	static $script = false;
@@ -122,7 +122,19 @@ class saImport
 
 	}
 
-	static function findFirstNode( &$params )
+	static function findFirstNodeByImportID( $params )
+	{
+		if ( !isset( $params['import_id_identifier'] ) )
+			$params['import_id_identifier'] = self::DEFAULT_IMPORT_ID_IDENTIFIER;
+
+		$findParams = $params;
+		$findParams['attribute_filter'] = array( array( $params['class']->attribute( 'identifier' ) . '/' . $params['import_id_identifier'], '=', $params['import_id_value'] ) );
+
+		return saImport::findFirstNode( $findParams );
+
+	}
+
+	static function findFirstNode( $params )
 	{
 		$nodes = self::FindNodes( $params );
 
