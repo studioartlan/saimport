@@ -129,7 +129,7 @@ class saImport
 
 		$params['attribute_filter'] = array( array( $params['class']->attribute( 'identifier' ) . '/' . $params['import_id_identifier'], '=', $params['import_id_value'] ) );
 
-		return saImport::findFirstNode( $findParams );
+		return saImport::findFirstNode( $params );
 
 	}
 
