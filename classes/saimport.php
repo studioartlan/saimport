@@ -50,7 +50,8 @@ class saImport
 
 	static function freeNodesMemory( $nodes )
 	{
-		return saUtils::freeNodesMemory( $nodes );
+		saUtils::freeNodesMemory( $nodes );
+		gc_collect_cycles();
 	}
 
 	static function ImportFile($filename, $importClass, $importMethod, $skipFirstRows = 0)
@@ -119,7 +120,7 @@ class saImport
 		else
 			$result = null;
 
-		//saImport::freeNodesMemory( $nodes );
+		//self::freeNodesMemory( $nodes );
 		
 		return $result;
 
@@ -297,6 +298,7 @@ class saImport
 
 	static function Import(&$import_data)
 	{
+		sawsDebug::reportMemory( "saImport::Import START" );
 		// Retreiving saimport_id
 		if (isset($import_data['saimport_id']))
 			self::$saImportID = $import_data['saimport_id'];
@@ -309,6 +311,7 @@ class saImport
 		else
 		{
 			self::output("No class defined.");
+			sawsDebug::reportMemory( "saImport::Import END" );
 			return false;
 		}
 
@@ -331,6 +334,7 @@ class saImport
 		else
 		{
 			self::output("No locations defined.");
+			sawsDebug::reportMemory( "saImport::Import END" );
 			return false;
 		}
 		
@@ -340,6 +344,7 @@ class saImport
 		else
 		{
 			self::output("No attibutes defined.");
+			sawsDebug::reportMemory( "saImport::Import END" );
 			return false;
 		}
 		
@@ -381,6 +386,7 @@ class saImport
 		else
 		{
 			self::output("No main node defined.");
+			sawsDebug::reportMemory( "saImport::Import END" );
 			return false;
 		}
 
@@ -399,7 +405,7 @@ class saImport
 
 //		print_r($parameters); return false;
 
-
+		sawsDebug::reportMemory( "saImport::Import before existing nodes" );
 		if ( !empty( $import_data['existing_node'] ) )
 			$existingNodes = array( $import_data['existing_node'] );
 		else
@@ -438,6 +444,7 @@ class saImport
 				self::output( "Nodes IDs: " . implode(',', $existingNodesIDs) );
 				self::output( "Nodes names: " . implode(',', $existingNodesNames) );
 				self::freeNodesMemory( $existingNodes );
+				sawsDebug::reportMemory( "saImport::Import END" );
 				return false;
 			}
 			else
@@ -460,6 +467,7 @@ class saImport
 			// If one object was found and overwrite is not enabled we don't import, but we return the found node
 			self::output("Existing nodes found but overwrite not enabled.");
 			self::freeNodesMemory( $existingNodes );
+			sawsDebug::reportMemory( "saImport::Import END" );
 			return $existingNodes[0];
 		}
 		else
@@ -469,6 +477,8 @@ class saImport
 			$object = $node->attribute('object');
 			self::output("Existing node found (" . $node->attribute('name') ."), updating...");
 		}
+
+		sawsDebug::reportMemory( "saImport::Import after existing nodes" );
 
 		$version = $object->currentVersion();
 		$version->setAttribute( 'status', eZContentObjectVersion::STATUS_DRAFT );
@@ -496,6 +506,8 @@ class saImport
 		// Set attributes
 		$dataMap = $object->attribute( 'data_map' );
 		$paramAttributes = $parameters['attributes'];
+
+		sawsDebug::reportMemory( "saImport::Import before attribute" );
 
 		foreach ( $import_attributes as $attributeIdentifier => $attributeImportData )
 		{
@@ -539,8 +551,11 @@ class saImport
 			
 		}
 
+		sawsDebug::reportMemory( "saImport::Import after attribute" );
+		
 //ezDebug::writeError("Publishing object: " . $object->attribute( 'name' ));
 		self::output("Publishing object: " . $object->attribute( 'name' ), self::DEBUG_LEVEL_VERBOSE);
+		sawsDebug::reportMemory( "saImport::Import before publish" );
 		$operationResult = eZOperationHandler::execute(
 			'content', 'publish',
 			array(
@@ -548,6 +563,7 @@ class saImport
 				'version' => $version->attribute( 'version' )
 			)
 		);
+		sawsDebug::reportMemory( "saImport::Import after publish" );
 		
 		if ($operationResult && isset($operationResult['status']) && $operationResult['status'])
 			self::output("Object published: " . $object->attribute( 'name' ), self::DEBUG_LEVEL_VERBOSE);
@@ -555,7 +571,7 @@ class saImport
 			self::output("Object publishing failed: " . $object->attribute( 'name' ), self::DEBUG_LEVEL_VERBOSE);
 		
 		
-		saImport::freeNodesMemory( $existingNodes );
+		self::freeNodesMemory( $existingNodes );
 
 		unset( $version );
 		unset( $existingNodes );
@@ -564,7 +580,8 @@ class saImport
 		{
 			if ($additionalLocations)
 				self::addLocations($node->attribute('object'), $additionalLocations);
-				
+
+			sawsDebug::reportMemory( "saImport::Import END" );
 			return $node;
 		}
 		else
