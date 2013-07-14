@@ -50,33 +50,9 @@ class saImport
 
 	static function freeNodesMemory( $nodes )
 	{
-		return self::freeObjectsMemory( $nodes, true );
+		return saUtils::freeNodesMemory( $nodes );
 	}
 
-	static function freeObjectsMemory( $objects, $isNodes = false )
-	{
-		if ( !$objects )
-			return false;
-		
-		if ( !is_array( $objects ) )
-			$objects = array( $objects );
-
-		foreach ( $objects as $object )
-		{
-			if ( $isNodes )
-				$object = $object->attribute( 'object' );
-			else
-				$object = $item;
-
-			$objectID = $object->attribute( 'id' );
-
-			$object->resetDataMap();
-			eZContentObject::clearCache( $objectID );
-		}
-
-		return true;
-	}
-	
 	static function ImportFile($filename, $importClass, $importMethod, $skipFirstRows = 0)
 	{
 
@@ -672,20 +648,20 @@ class saImport
 		if ( !$replacements )
 			$replacements = self::$simpleHTMLReplacements;
 
-		$text = self::replacePatterns($text, $replacements, $delimiter);
-                $text = trim($text);
+		$text = self::replacePatterns( $text, $replacements, $delimiter );
+		$text = trim( $text );
 
 // TODO: detect wether to use OE parser or not
 //                $parser = new eZOEInputParser();
 
-        $parser = new eZSimplifiedXMLInputParser(NULL);
+        $parser = new eZSimplifiedXMLInputParser( NULL );
         $parser->setParseLineBreaks( true );
         $document = $parser->process( $text );
 
-		if ($document)
+		if ( $document )
 			$text = eZXMLTextType::domString( $document );
 		else
-			saImport::output("Could not parse XML text $text");
+			saImport::output( "Could not parse XML text $text" );
 
         return $text;
 
