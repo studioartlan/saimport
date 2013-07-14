@@ -127,6 +127,7 @@ class saImport
 	
 	static function FindNodes( &$params )
 	{
+		sawsDebug::reportMemory( "saImport: FIND NODE START" );
 		if (!isset($params['class'])  || !isset($params['parent_node']))
 			return false;
 		
@@ -171,6 +172,7 @@ class saImport
 
 		$result = $params['parent_node']->subTree($fetchHash);
 	
+		sawsDebug::reportMemory( "saImport: FIND NODE END" );
 		return $result;
 	}
 	
@@ -254,8 +256,6 @@ class saImport
 				if ( self::$lowercaseComparison ) $matchValue = strtolower( $matchValue );
 				$attributeFilter[] = array( $class->attribute('identifier') . '/' . $attributeName, '=', $matchValue );
 			}
-				
-
 		}
 
 		if ( isset( $importData['attribute_filter'] ) )
@@ -437,6 +437,7 @@ class saImport
 				self::output( "More than one existing node found." );
 				self::output( "Nodes IDs: " . implode(',', $existingNodesIDs) );
 				self::output( "Nodes names: " . implode(',', $existingNodesNames) );
+				self::freeNodesMemory( $existingNodes );
 				return false;
 			}
 			else
@@ -458,6 +459,7 @@ class saImport
 		{
 			// If one object was found and overwrite is not enabled we don't import, but we return the found node
 			self::output("Existing nodes found but overwrite not enabled.");
+			self::freeNodesMemory( $existingNodes );
 			return $existingNodes[0];
 		}
 		else
@@ -555,8 +557,8 @@ class saImport
 		
 		saImport::freeNodesMemory( $existingNodes );
 
-		unset($version);
-		unset($existingNodes);
+		unset( $version );
+		unset( $existingNodes );
 
 		if ($node)
 		{
