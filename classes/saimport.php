@@ -413,7 +413,7 @@ class saImport
 			// Checking for exsisting objects
 			self::output("Looking for existing nodes...");
 	
-			if (isset($import_data['existing_filter']))
+			if ( !empty( $import_data['existing_filter'] ) )
 					$existingNodes = self::FindNodes($import_data['existing_filter']);
 			else
 				$existingNodes = false;			
