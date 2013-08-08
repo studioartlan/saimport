@@ -263,21 +263,30 @@ class saImport
 			$attributeFilter = array_merge( $attributeFilter, $importData['attribute_filter'] );
 
 
-		$existingFilter = array(
-			'parent_node' => $searchNode,
-			'class' => $importData['class'],
-		);
-
-		if ( $attributeFilter )
+//var_dump($importData['attributes']);exit;
+		if ( !empty( $importData['existing_node'] ) )
 		{
-			array_unshift(  $attributeFilter, 'and' );
-			$existingFilter['attribute_filter'] = $attributeFilter;
+
+			$existingFilter = array(
+				'parent_node' => $searchNode,
+				'class' => $importData['class'],
+			);
+	
+			if ( $attributeFilter )
+			{
+				array_unshift(  $attributeFilter, 'and' );
+				$existingFilter['attribute_filter'] = $attributeFilter;
+			}
+	
+			if ( isset( $importData['ignore_visibility'] ) )
+			{
+				$existingFilter['ignore_visibility'] = $importData['ignore_visibility'];
+			}
+	
+			$importData['existing_filter'] = $existingFilter;
+			
 		}
 
-		if ( isset( $importData['ignore_visibility'] ) )
-		{
-			$existingFilter['ignore_visibility'] = $importData['ignore_visibility'];
-		}
 
 //TODO: manage case when $searchAllLocations == true
 		if ( !isset( $importData['merge_match_attributes'] ) || $importData['merge_match_attributes'] )
@@ -289,8 +298,6 @@ class saImport
 			
 		}
 			
-//var_dump($importData['attributes']);exit;
-		$importData['existing_filter'] = $existingFilter;
 
 		return self::Import( $importData );
 
