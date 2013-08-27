@@ -137,7 +137,7 @@ class saImport
 
 	}
 	
-	static function FindNodes( &$params )
+	static function FindNodes( $params )
 	{
 		if (!isset($params['class'])  || !isset($params['parent_node']))
 			return false;
