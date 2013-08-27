@@ -6,7 +6,7 @@ class saImport
 {
 
 	const DEFAULT_INI_NAME = 'saimport.ini';
-
+	const DEFAULT_IMPORT_ID_IDENTIFIER = 'import_id';
 
 	static $cli = false;
 	static $script = false;
@@ -50,33 +50,10 @@ class saImport
 
 	static function freeNodesMemory( $nodes )
 	{
-		return self::freeObjectsMemory( $nodes, true );
+		saUtils::freeNodesMemory( $nodes );
+		gc_collect_cycles();
 	}
 
-	static function freeObjectsMemory( $objects, $isNodes = false )
-	{
-		if ( !$objects )
-			return false;
-		
-		if ( !is_array( $objects ) )
-			$objects = array( $objects );
-
-		foreach ( $objects as $object )
-		{
-			if ( $isNodes )
-				$object = $object->attribute( 'object' );
-			else
-				$object = $item;
-
-			$objectID = $object->attribute( 'id' );
-
-			$object->resetDataMap();
-			eZContentObject::clearCache( $objectID );
-		}
-
-		return true;
-	}
-	
 	static function ImportFile($filename, $importClass, $importMethod, $skipFirstRows = 0)
 	{
 
@@ -122,8 +99,20 @@ class saImport
 
 	}
 
-	static function findFirstNode( &$params )
+	static function findFirstNodeByImportID( $params )
 	{
+		if ( !isset( $params['import_id_identifier'] ) )
+			$params['import_id_identifier'] = self::DEFAULT_IMPORT_ID_IDENTIFIER;
+
+		$params['attribute_filter'] = array( array( $params['class']->attribute( 'identifier' ) . '/' . $params['import_id_identifier'], '=', $params['import_id_value'] ) );
+
+		return saImport::findFirstNode( $params );
+
+	}
+
+	static function findFirstNode( $params )
+	{
+		$params['limit'] = 1;
 		$nodes = self::FindNodes( $params );
 
 		if ( $nodes )
@@ -131,7 +120,7 @@ class saImport
 		else
 			$result = null;
 
-		//saImport::freeNodesMemory( $nodes );
+		//self::freeNodesMemory( $nodes );
 		
 		return $result;
 
@@ -139,6 +128,7 @@ class saImport
 	
 	static function FindNodes( $params )
 	{
+		sawsDebug::reportMemory( "saImport: FIND NODE START" );
 		if (!isset($params['class'])  || !isset($params['parent_node']))
 			return false;
 		
@@ -169,11 +159,21 @@ class saImport
 		if (isset($params['attribute_filter']))
 			$fetchHash['AttributeFilter'] = $params['attribute_filter'];
 
+		if ( isset( $params['depth'] ) )
+			$fetchHash['Depth'] = $params['depth'];
+
+		if ( isset( $params['limit'] ) )
+			$fetchHash['Limit'] = $params['limit'];
+
 		if (isset($params['ignore_visibility']))
 			$fetchHash['IgnoreVisibility'] = $params['ignore_visibility'];
 
+		if (isset($params['main_node_only']))
+			$fetchHash['MainNodeOnly'] = $params['main_node_only'];
+
 		$result = $params['parent_node']->subTree($fetchHash);
 	
+		sawsDebug::reportMemory( "saImport: FIND NODE END" );
 		return $result;
 	}
 	
@@ -257,29 +257,36 @@ class saImport
 				if ( self::$lowercaseComparison ) $matchValue = strtolower( $matchValue );
 				$attributeFilter[] = array( $class->attribute('identifier') . '/' . $attributeName, '=', $matchValue );
 			}
-				
-
 		}
 
 		if ( isset( $importData['attribute_filter'] ) )
 			$attributeFilter = array_merge( $attributeFilter, $importData['attribute_filter'] );
 
 
-		$existingFilter = array(
-			'parent_node' => $searchNode,
-			'class' => $importData['class'],
-		);
-
-		if ( $attributeFilter )
+//var_dump($importData['attributes']);exit;
+		if ( !empty( $importData['existing_node'] ) )
 		{
-			array_unshift(  $attributeFilter, 'and' );
-			$existingFilter['attribute_filter'] = $attributeFilter;
+
+			$existingFilter = array(
+				'parent_node' => $searchNode,
+				'class' => $importData['class'],
+			);
+	
+			if ( $attributeFilter )
+			{
+				array_unshift(  $attributeFilter, 'and' );
+				$existingFilter['attribute_filter'] = $attributeFilter;
+			}
+	
+			if ( isset( $importData['ignore_visibility'] ) )
+			{
+				$existingFilter['ignore_visibility'] = $importData['ignore_visibility'];
+			}
+	
+			$importData['existing_filter'] = $existingFilter;
+			
 		}
 
-		if ( isset( $importData['ignore_visibility'] ) )
-		{
-			$existingFilter['ignore_visibility'] = $importData['ignore_visibility'];
-		}
 
 //TODO: manage case when $searchAllLocations == true
 		if ( !isset( $importData['merge_match_attributes'] ) || $importData['merge_match_attributes'] )
@@ -291,8 +298,6 @@ class saImport
 			
 		}
 			
-//var_dump($importData['attributes']);exit;
-		$importData['existing_filter'] = $existingFilter;
 
 		return self::Import( $importData );
 
@@ -300,6 +305,7 @@ class saImport
 
 	static function Import(&$import_data)
 	{
+		sawsDebug::reportMemory( "saImport::Import START" );
 		// Retreiving saimport_id
 		if (isset($import_data['saimport_id']))
 			self::$saImportID = $import_data['saimport_id'];
@@ -312,6 +318,7 @@ class saImport
 		else
 		{
 			self::output("No class defined.");
+			sawsDebug::reportMemory( "saImport::Import END" );
 			return false;
 		}
 
@@ -334,6 +341,7 @@ class saImport
 		else
 		{
 			self::output("No locations defined.");
+			sawsDebug::reportMemory( "saImport::Import END" );
 			return false;
 		}
 		
@@ -343,6 +351,7 @@ class saImport
 		else
 		{
 			self::output("No attibutes defined.");
+			sawsDebug::reportMemory( "saImport::Import END" );
 			return false;
 		}
 		
@@ -384,6 +393,7 @@ class saImport
 		else
 		{
 			self::output("No main node defined.");
+			sawsDebug::reportMemory( "saImport::Import END" );
 			return false;
 		}
 
@@ -402,7 +412,7 @@ class saImport
 
 //		print_r($parameters); return false;
 
-
+		sawsDebug::reportMemory( "saImport::Import before existing nodes" );
 		if ( !empty( $import_data['existing_node'] ) )
 			$existingNodes = array( $import_data['existing_node'] );
 		else
@@ -410,7 +420,7 @@ class saImport
 			// Checking for exsisting objects
 			self::output("Looking for existing nodes...");
 	
-			if (isset($import_data['existing_filter']))
+			if ( !empty( $import_data['existing_filter'] ) )
 					$existingNodes = self::FindNodes($import_data['existing_filter']);
 			else
 				$existingNodes = false;			
@@ -440,6 +450,8 @@ class saImport
 				self::output( "More than one existing node found." );
 				self::output( "Nodes IDs: " . implode(',', $existingNodesIDs) );
 				self::output( "Nodes names: " . implode(',', $existingNodesNames) );
+				self::freeNodesMemory( $existingNodes );
+				sawsDebug::reportMemory( "saImport::Import END" );
 				return false;
 			}
 			else
@@ -461,6 +473,8 @@ class saImport
 		{
 			// If one object was found and overwrite is not enabled we don't import, but we return the found node
 			self::output("Existing nodes found but overwrite not enabled.");
+			self::freeNodesMemory( $existingNodes );
+			sawsDebug::reportMemory( "saImport::Import END" );
 			return $existingNodes[0];
 		}
 		else
@@ -470,6 +484,8 @@ class saImport
 			$object = $node->attribute('object');
 			self::output("Existing node found (" . $node->attribute('name') ."), updating...");
 		}
+
+		sawsDebug::reportMemory( "saImport::Import after existing nodes" );
 
 		$version = $object->currentVersion();
 		$version->setAttribute( 'status', eZContentObjectVersion::STATUS_DRAFT );
@@ -497,6 +513,8 @@ class saImport
 		// Set attributes
 		$dataMap = $object->attribute( 'data_map' );
 		$paramAttributes = $parameters['attributes'];
+
+		sawsDebug::reportMemory( "saImport::Import before attribute" );
 
 		foreach ( $import_attributes as $attributeIdentifier => $attributeImportData )
 		{
@@ -540,8 +558,11 @@ class saImport
 			
 		}
 
+		sawsDebug::reportMemory( "saImport::Import after attribute" );
+		
 //ezDebug::writeError("Publishing object: " . $object->attribute( 'name' ));
 		self::output("Publishing object: " . $object->attribute( 'name' ), self::DEBUG_LEVEL_VERBOSE);
+		sawsDebug::reportMemory( "saImport::Import before publish" );
 		$operationResult = eZOperationHandler::execute(
 			'content', 'publish',
 			array(
@@ -549,6 +570,7 @@ class saImport
 				'version' => $version->attribute( 'version' )
 			)
 		);
+		sawsDebug::reportMemory( "saImport::Import after publish" );
 		
 		if ($operationResult && isset($operationResult['status']) && $operationResult['status'])
 			self::output("Object published: " . $object->attribute( 'name' ), self::DEBUG_LEVEL_VERBOSE);
@@ -556,16 +578,17 @@ class saImport
 			self::output("Object publishing failed: " . $object->attribute( 'name' ), self::DEBUG_LEVEL_VERBOSE);
 		
 		
-		saImport::freeNodesMemory( $existingNodes );
+		self::freeNodesMemory( $existingNodes );
 
-		unset($version);
-		unset($existingNodes);
+		unset( $version );
+		unset( $existingNodes );
 
 		if ($node)
 		{
 			if ($additionalLocations)
 				self::addLocations($node->attribute('object'), $additionalLocations);
-				
+
+			sawsDebug::reportMemory( "saImport::Import END" );
 			return $node;
 		}
 		else
@@ -651,20 +674,20 @@ class saImport
 		if ( !$replacements )
 			$replacements = self::$simpleHTMLReplacements;
 
-		$text = self::replacePatterns($text, $replacements, $delimiter);
-                $text = trim($text);
+		$text = self::replacePatterns( $text, $replacements, $delimiter );
+		$text = trim( $text );
 
 // TODO: detect wether to use OE parser or not
 //                $parser = new eZOEInputParser();
 
-        $parser = new eZSimplifiedXMLInputParser(NULL);
+        $parser = new eZSimplifiedXMLInputParser( NULL );
         $parser->setParseLineBreaks( true );
         $document = $parser->process( $text );
 
-		if ($document)
+		if ( $document )
 			$text = eZXMLTextType::domString( $document );
 		else
-			saImport::output("Could not parse XML text $text");
+			saImport::output( "Could not parse XML text $text" );
 
         return $text;
 
